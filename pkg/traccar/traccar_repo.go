@@ -24,14 +24,14 @@ func NewRepo(db *pg.DB, eventChannel string, log zerolog.Logger) *Repo {
 }
 
 type tableEvent struct {
-	Table  string `json:"table"`
-	Action string `json:"action"`
-	Data   []byte `json:"data"`
+	Table  string      `json:"table"`
+	Action string      `json:"action"`
+	Data   interface{} `json:"data"`
 }
 
 type TableEvent struct {
-	Action  string `json:"action"`
-	Payload []byte `json:"payload"`
+	Action  string      `json:"action"`
+	Payload interface{} `json:"payload"`
 }
 
 func (r *Repo) Listen(ctx context.Context, table string, out chan<- TableEvent) {
@@ -45,6 +45,7 @@ func (r *Repo) Listen(ctx context.Context, table string, out chan<- TableEvent) 
 			return
 		case n := <-ch:
 			e := new(tableEvent)
+
 			if err := json.Unmarshal([]byte(n.Payload), e); err != nil {
 				r.log.Err(err).Msg("failed to decode event payload")
 				continue
@@ -58,7 +59,7 @@ func (r *Repo) Listen(ctx context.Context, table string, out chan<- TableEvent) 
 				Info().
 				Str("table", e.Table).
 				Str("action", e.Action).
-				RawJSON("data", e.Data).
+				Interface("data", e.Data).
 				Msg("received event")
 
 			out <- TableEvent{e.Action, e.Data}
