@@ -33,13 +33,13 @@ $$ LANGUAGE plpgsql;
 
 
 CREATE TRIGGER tc_positions_notify_event
-AFTER INSERT tc_positions
+AFTER INSERT ON public.tc_positions
     FOR EACH ROW EXECUTE PROCEDURE notify_event();
 
 CREATE TRIGGER tc_events_notify_event
-AFTER INSERT tc_events
+AFTER INSERT ON public.tc_events
     FOR EACH ROW EXECUTE PROCEDURE notify_event();
 
 CREATE TRIGGER tc_devices_notify_event
-AFTER INSERT OR UPDATE OR DELETE tc_devices
+AFTER INSERT OR UPDATE OR DELETE ON public.tc_devices
     FOR EACH ROW EXECUTE PROCEDURE notify_event();
