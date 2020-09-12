@@ -1,4 +1,3 @@
-
 CREATE OR REPLACE FUNCTION notify_event() RETURNS TRIGGER AS $$
                                      
     DECLARE                         
