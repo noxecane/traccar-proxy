@@ -22,3 +22,6 @@ vendor/
 # build artifacts
 tmp/
 bin/
+
+# Sample Data
+samples/
