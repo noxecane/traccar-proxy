@@ -1,0 +1,50 @@
+# Default values for chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  tag: stable
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+  
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 150Mi
+  requests:
+    cpu: 100m
+    memory: 100Mi
+
+app:
+  port: 80
+  commonEnv:
+    - scheme
+    - secret
+    - session_timeout
+    - headless_timeout
+    - redis_host
+    - redis_port
+    - redis_password
+    - postgres_host
+    - postgres_port
+    - postgres_secure_mode
+  env:
+    - postgres_database
+    - postgres_user
+    - postgres_password
+    - traccar_host
+    - traccar_port
+    - traccar_database
