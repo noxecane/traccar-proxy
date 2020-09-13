@@ -9,9 +9,12 @@ import (
 	"github.com/go-chi/chi"
 	chiWare "github.com/go-chi/chi/middleware"
 	"github.com/go-pg/pg/v9"
+	"github.com/nats-io/nats.go"
 	"github.com/tsaron/anansi"
 	"github.com/tsaron/anansi/middleware"
 	"tsaron.com/positions/pkg/config"
+	"tsaron.com/positions/pkg/proxy"
+	"tsaron.com/positions/pkg/traccar"
 )
 
 func main() {
@@ -35,6 +38,12 @@ func main() {
 		}
 	}()
 	log.Info().Msg("successfully connected to postgres")
+
+	nc, err := nats.Connect(env.NatsUrl)
+	if err != nil {
+		panic(err)
+	}
+	log.Info().Msg("successfully connected to nats server")
 
 	// var tmt time.Duration
 	// if tmt, err = time.ParseDuration(env.HeadlessTimeout); err != nil {
@@ -72,8 +81,20 @@ func main() {
 
 	go anansi.CancelOnInterrupt(cancel, log)
 
+	repo := traccar.NewRepo(db, "traccar.events", log)
+
+	emitter, err := proxy.NewEmitter(nc, repo, log)
+	if err != nil {
+		panic(err)
+	}
+
+	done := emitter.Run(ctx)
+
 	anansi.RunServer(ctx, log, &http.Server{
 		Addr:    fmt.Sprintf(":%d", env.Port),
 		Handler: appRouter,
 	})
+
+	// make sure the worker dies
+	done.Wait()
 }
