@@ -3,7 +3,6 @@ package proxy
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 
@@ -52,7 +51,7 @@ func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
 			case ev := <-out:
 				var event PositionEvent
 				if err := json.Unmarshal(ev, &event); err != nil {
-					e.log.Err(err).Msg("failed to to decode event")
+					e.log.Err(err).RawJSON("event", ev).Msg("failed to to decode event")
 					continue
 				}
 
@@ -105,9 +104,9 @@ func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
 					},
 				}
 
-				e.log.Info().Interface("position", res).Msg("complete")
-
-				// err := e.conn.Publish("traccar.positions")
+				if err := e.conn.Publish("traccar.positions", res); err != nil {
+					e.log.Err(err).Interface("position", res).Msg("complete")
+				}
 
 			case <-ctx.Done():
 				e.log.Info().Msg("shutting down the emitter")
