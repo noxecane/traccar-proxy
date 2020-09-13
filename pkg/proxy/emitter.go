@@ -40,7 +40,7 @@ func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	out := make(chan []byte, 100)
+	out := make(chan []byte, 64)
 
 	// start listening for events
 	go e.repo.Listen(ctx, "tc_positions", out)
@@ -105,7 +105,7 @@ func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
 				}
 
 				if err := e.conn.Publish("traccar.positions", res); err != nil {
-					e.log.Err(err).Interface("position", res).Msg("complete")
+					e.log.Err(err).Interface("position", res).Msg("failed to publish")
 				}
 
 			case <-ctx.Done():
