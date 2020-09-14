@@ -8,7 +8,9 @@ type Env struct {
 	Scheme string `required:"true"`
 	Secret []byte `required:"true"`
 
-	NatsUrl string `required:"true" split_words:"true"`
+	NatsUrl      string `required:"true" split_words:"true"`
+	NatsUser     string `split_words:"true"`
+	NatsPassword string `split_words:"true"`
 
 	PostgresHost       string `required:"true" split_words:"true"`
 	PostgresPort       int    `required:"true" split_words:"true"`
