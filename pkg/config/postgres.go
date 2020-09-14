@@ -14,12 +14,6 @@ func SetupDB(env Env) (*pg.DB, error) {
 		Password:        env.PostgresPassword,
 		Database:        env.PostgresDatabase,
 		ApplicationName: env.Name,
-		OnConnect: func(c *pg.Conn) error {
-			if _, err := c.Exec("set search_path=?", env.Name); err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 
 	if env.PostgresSecureMode {
