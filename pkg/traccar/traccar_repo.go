@@ -109,6 +109,10 @@ func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, erro
 		Limit(1).
 		Select()
 
+	if err == pg.ErrNoRows {
+		return nil, nil
+	}
+
 	return position, err
 }
 

@@ -48,7 +48,7 @@ func getPositions(repo *traccar.Repo) http.HandlerFunc {
 			})
 		}
 
-		var tps []model.TraccarPosition
+		var tps []traccar.Position
 		var err error
 
 		if q.From.IsZero() {
@@ -63,7 +63,7 @@ func getPositions(repo *traccar.Repo) http.HandlerFunc {
 
 		var ps []model.Position
 		for _, tp := range tps {
-			p, err := traccar.TransformPosition(tp)
+			p, err := traccar.TransformPosition(repo.ToTraccarPosition(&tp))
 			if err != nil {
 				panic(anansi.APIError{
 					Code:    http.StatusUnprocessableEntity,
@@ -97,7 +97,12 @@ func getLatestPosition(repo *traccar.Repo) http.HandlerFunc {
 			panic(errors.Wrap(err, "could not get latest position"))
 		}
 
-		pos, err := traccar.TransformPosition(*p)
+		if p == nil {
+			anansi.SendSuccess(r, w, p)
+			return
+		}
+
+		pos, err := traccar.TransformPosition(repo.ToTraccarPosition(p))
 		if err != nil {
 			panic(anansi.APIError{
 				Code:    http.StatusUnprocessableEntity,
