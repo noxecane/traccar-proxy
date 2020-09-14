@@ -103,7 +103,7 @@ func (e *Emitter) Run(ctx context.Context, wg *sync.WaitGroup) {
 					},
 				}
 
-				if err := e.conn.Publish("traccar.positions", res); err != nil {
+				if err := e.conn.Publish("traccar.positions.stream", res); err != nil {
 					e.log.Err(err).Interface("position", res).Msg("failed to publish")
 				}
 
