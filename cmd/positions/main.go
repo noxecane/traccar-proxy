@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -87,7 +88,9 @@ func main() {
 		panic(err)
 	}
 
-	done := emitter.Run(ctx)
+	done := new(sync.WaitGroup)
+
+	emitter.Run(ctx, done)
 
 	anansi.RunServer(ctx, log, &http.Server{
 		Addr:    fmt.Sprintf(":%d", env.Port),

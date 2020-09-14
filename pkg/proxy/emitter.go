@@ -35,9 +35,8 @@ func NewEmitter(conn *nats.Conn, repo *traccar.Repo, log zerolog.Logger) (*Emitt
 	return &Emitter{subLogger, repo, encConn}, nil
 }
 
-func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
+func (e *Emitter) Run(ctx context.Context, wg *sync.WaitGroup) {
 	// WaitGroup to force blocking on the caller
-	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
 	out := make(chan []byte, 64)
@@ -121,6 +120,4 @@ func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
 			}
 		}
 	}()
-
-	return wg
 }
