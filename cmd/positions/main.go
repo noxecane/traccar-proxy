@@ -70,7 +70,7 @@ func main() {
 
 	// mount API on app router
 	appRouter := chi.NewRouter()
-	appRouter.Mount("/api/v1", router)
+	appRouter.Mount("/api/v1/traccar", router)
 	appRouter.Get("/", config.HealthChecker(db))
 	appRouter.NotFound(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "Whoops!! This route doesn't exist", http.StatusNotFound)
