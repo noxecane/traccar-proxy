@@ -29,22 +29,23 @@ func (i ISOWithoutTZ) MarshalJSON() ([]byte, error) {
 }
 
 type TraccarPosition struct {
+	tableName  struct{} `json:"-" pg:"tc_positions"`
 	ID         uint
-	CreatedAt  ISOWithoutTZ `json:"servertime"`
-	RecordedAt ISOWithoutTZ `json:"devicetime"`
-	Valid      bool         `json:"valid"`
-	Device     uint         `json:"deviceid"`
-	Latitude   float64      `json:"latitude"`
-	Longitude  float64      `json:"longitude"`
-	Altitude   float64      `json:"altitude"`
-	Speed      float64      `json:"speed"`
-	Course     float64      `json:"course"`
-	Payload    string       `json:"attributes"`
-	Accuracy   uint         `json:"accuracy"`
-	Address    string       `json:"address"`
-	Protocol   string       `json:"protocol"`
-	Network    string       `json:"network"`
-	FixedAt    ISOWithoutTZ `json:"fixtime"`
+	CreatedAt  ISOWithoutTZ `json:"servertime" pg:"servertime"`
+	RecordedAt ISOWithoutTZ `json:"devicetime" pg:"devicetime"`
+	Valid      bool         `json:"valid" pg:",use_zero"`
+	Device     uint         `json:"deviceid" pg:"deviceid"`
+	Latitude   float64      `json:"latitude" pg:",use_zero"`
+	Longitude  float64      `json:"longitude" pg:",use_zero"`
+	Altitude   float64      `json:"altitude" pg:",use_zero"`
+	Speed      float64      `json:"speed" pg:",use_zero"`
+	Course     float64      `json:"course" pg:",use_zero"`
+	Payload    string       `json:"attributes" pg:"attributes,use_zero"`
+	Accuracy   uint         `json:"accuracy" pg:",use_zero"`
+	Address    string       `json:"address" pg:",use_zero"`
+	Protocol   string       `json:"protocol" pg:",use_zero"`
+	Network    string       `json:"network" pg:",use_zero"`
+	FixedAt    ISOWithoutTZ `json:"fixtime" pg:"fixtime,use_zero"`
 }
 
 type TraccarAttributes struct {
