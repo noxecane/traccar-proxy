@@ -1,25 +1,50 @@
 package model
 
-import "time"
+import (
+	"encoding/json"
+	"strings"
+	"time"
+)
+
+type ISOWithoutTZ time.Time
+
+// imeplement Marshaler und Unmarshalere interface
+func (i *ISOWithoutTZ) UnmarshalJSON(b []byte) error {
+	// remove quotes
+	tStr := strings.Trim(string(b), "\"")
+
+	t, err := time.Parse("2006-01-02T15:04:05.999", tStr)
+	if err != nil {
+		return err
+	}
+
+	// update time in place
+	*i = ISOWithoutTZ(t)
+
+	return nil
+}
+
+func (i ISOWithoutTZ) MarshalJSON() ([]byte, error) {
+	return json.Marshal(i)
+}
 
 type Position struct {
-	tableName  struct{} `pg:"tc_positions"`
 	ID         uint
-	CreatedAt  time.Time `pg:"servertime"`
-	RecordedAt time.Time `pg:"devicetime"`
-	Valid      bool      `pg:",use_zero"`
-	Device     uint      `pg:"deviceid"`
-	Latitude   float64   `pg:",use_zero"`
-	Longitude  float64   `pg:",use_zero"`
-	Altitude   float64   `pg:",use_zero"`
-	Speed      float64   `pg:",use_zero"`
-	Course     float64   `pg:",use_zero"`
-	Payload    string    `pg:"attributes"`
-	Accuracy   string
-	Address    string
-	Protocol   string
-	Network    string
-	FixedAt    time.Time `pg:"fixtime"`
+	CreatedAt  ISOWithoutTZ `json:"servertime"`
+	RecordedAt ISOWithoutTZ `json:"devicetime"`
+	Valid      bool         `json:"valid"`
+	Device     uint         `json:"deviceid"`
+	Latitude   float64      `json:"latitude"`
+	Longitude  float64      `json:"longitude"`
+	Altitude   float64      `json:"altitude"`
+	Speed      float64      `json:"speed"`
+	Course     float64      `json:"course"`
+	Payload    string       `json:"attributes"`
+	Accuracy   uint         `json:"accuracy"`
+	Address    string       `json:"address"`
+	Protocol   string       `json:"protocol"`
+	Network    string       `json:"network"`
+	FixedAt    ISOWithoutTZ `json:"fixtime"`
 }
 
 type Attributes struct {

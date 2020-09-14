@@ -29,12 +29,7 @@ type tableEvent struct {
 	Data   interface{} `json:"data"`
 }
 
-type TableEvent struct {
-	Action  string      `json:"action"`
-	Payload interface{} `json:"payload"`
-}
-
-func (r *Repo) Listen(ctx context.Context, table string, out chan<- TableEvent) {
+func (r *Repo) Listen(ctx context.Context, table string, out chan<- []byte) {
 	l := r.db.Listen(r.channel)
 	defer l.Close()
 
@@ -62,7 +57,7 @@ func (r *Repo) Listen(ctx context.Context, table string, out chan<- TableEvent) 
 				Interface("data", e.Data).
 				Msg("received event")
 
-			out <- TableEvent{e.Action, e.Data}
+			out <- []byte(n.Payload)
 		}
 	}
 }
