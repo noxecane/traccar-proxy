@@ -36,9 +36,8 @@ app:
     - session_timeout
     - headless_timeout
     - nats_url
-    - redis_host
-    - redis_port
-    - redis_password
+    - nats_user
+    - nats_password
     - postgres_host
     - postgres_port
     - postgres_secure_mode
