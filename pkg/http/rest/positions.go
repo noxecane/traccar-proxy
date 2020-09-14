@@ -21,10 +21,10 @@ type positionQuery struct {
 	To     time.Time `json:"to"`
 }
 
-func Positions(r *chi.Mux, repo *traccar.Repo) {
+func Positions(r *chi.Mux, sessions *anansi.SessionStore, repo *traccar.Repo) {
 	r.Route("/positions", func(r chi.Router) {
-		r.Get("/", getPositions(repo))
-		r.Get("/latest", getLatestPosition(repo))
+		r.With(sessions.Headless()).Get("/", getPositions(repo))
+		r.With(sessions.Headless()).Get("/latest", getLatestPosition(repo))
 	})
 }
 
