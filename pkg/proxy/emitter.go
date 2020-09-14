@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
-	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/rs/zerolog"
@@ -19,8 +18,8 @@ type Emitter struct {
 }
 
 type PositionEvent struct {
-	Action   string         `json:"action"`
-	Position model.Position `json:"data"`
+	Action   string                `json:"action"`
+	Position model.TraccarPosition `json:"data"`
 }
 
 // TODO: https://github.com/nats-io/nats.go/blob/master/examples/nats-qsub/main.go (options)
@@ -35,9 +34,8 @@ func NewEmitter(conn *nats.Conn, repo *traccar.Repo, log zerolog.Logger) (*Emitt
 	return &Emitter{subLogger, repo, encConn}, nil
 }
 
-func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
+func (e *Emitter) Run(ctx context.Context, wg *sync.WaitGroup) {
 	// WaitGroup to force blocking on the caller
-	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
 	out := make(chan []byte, 64)
@@ -60,48 +58,11 @@ func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
 				}
 
 				p := event.Position
-				var attr model.Attributes
 
-				if err := json.Unmarshal([]byte(p.Payload), &attr); err != nil {
-					e.log.
-						Err(err).
-						Interface("position", p).
-						Msg("failed to to decode attributes")
+				res, err := traccar.TransformPosition(p)
+				if err != nil {
+					e.log.Err(err).Interface("position", p).Msg("")
 					continue
-				}
-
-				res := Position{
-					ID:         p.ID,
-					CreatedAt:  time.Time(p.CreatedAt),
-					RecordedAt: time.Time(p.RecordedAt),
-					Valid:      p.Valid,
-					Device:     p.Device,
-					Latitude:   p.Latitude,
-					Longitude:  p.Longitude,
-					Altitude:   p.Altitude,
-					Speed:      p.Speed,
-					Course:     p.Course,
-					Meta: Attributes{
-						FuelConsumption:     attr.FuelConsumption,
-						Raw:                 attr.Raw,
-						GSensor:             attr.GSensor,
-						Motion:              attr.Motion,
-						TotalDistance:       attr.TotalDistance,
-						RPM:                 attr.RPM,
-						Alarm:               attr.Alarm,
-						Ignition:            attr.Ignition,
-						DTC:                 attr.DTC,
-						EngineLoad:          attr.EngineLoad,
-						CoolantTemperature:  attr.CoolantTemperature,
-						TripOdometer:        attr.TripOdometer,
-						IntakeTemperature:   attr.IntakeTemperature,
-						Odometer:            attr.Odometer,
-						MapIntake:           attr.MapIntake,
-						Throttle:            attr.Throttle,
-						MilDistance:         attr.MilDistance,
-						Satellites:          attr.Satellites,
-						TripFuelConsumption: attr.TripFuelConsumption,
-					},
 				}
 
 				if err := e.conn.Publish("traccar.positions", res); err != nil {
@@ -121,6 +82,4 @@ func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
 			}
 		}
 	}()
-
-	return wg
 }

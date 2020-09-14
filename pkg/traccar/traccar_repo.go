@@ -12,6 +12,26 @@ import (
 
 const tsFormat = "2006-01-02 15:04"
 
+type Position struct {
+	tableName  struct{} `pg:"tc_positions"`
+	ID         uint
+	CreatedAt  time.Time `pg:"servertime"`
+	RecordedAt time.Time `pg:"devicetime"`
+	Valid      bool      `pg:",use_zero"`
+	Device     uint      `pg:"deviceid"`
+	Latitude   float64   `pg:",use_zero"`
+	Longitude  float64   `pg:",use_zero"`
+	Altitude   float64   `pg:",use_zero"`
+	Speed      float64   `pg:",use_zero"`
+	Course     float64   `pg:",use_zero"`
+	Payload    string    `pg:"attributes"`
+	Accuracy   uint
+	Address    string
+	Protocol   string
+	Network    string
+	FixedAt    time.Time `pg:"fixtime"`
+}
+
 type Repo struct {
 	log     zerolog.Logger
 	db      *pg.DB
@@ -71,8 +91,8 @@ func (r *Repo) Device(ctx context.Context, id uint) (*model.Device, error) {
 	return device, nil
 }
 
-func (r *Repo) Position(ctx context.Context, id uint) (*model.Position, error) {
-	position := &model.Position{ID: id}
+func (r *Repo) Position(ctx context.Context, id uint) (*Position, error) {
+	position := &Position{ID: id}
 	if err := r.db.ModelContext(ctx, position).WherePK().Select(); err != nil {
 		return nil, err
 	}
@@ -80,8 +100,8 @@ func (r *Repo) Position(ctx context.Context, id uint) (*model.Position, error) {
 	return position, nil
 }
 
-func (r *Repo) LatestPosition(ctx context.Context, device uint) (*model.Position, error) {
-	position := &model.Position{}
+func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, error) {
+	position := &Position{}
 	err := r.db.
 		ModelContext(ctx, position).
 		Where("deviceid = ?", device).
@@ -89,22 +109,28 @@ func (r *Repo) LatestPosition(ctx context.Context, device uint) (*model.Position
 		Limit(1).
 		Select()
 
+	if err == pg.ErrNoRows {
+		return nil, nil
+	}
+
 	return position, err
 }
 
-func (r *Repo) Positions(ctx context.Context, device uint, limit uint) ([]model.Position, error) {
-	positions := []model.Position{}
+func (r *Repo) Positions(ctx context.Context, device, offset, limit uint) ([]Position, error) {
+	positions := []Position{}
 
 	var err error
 	if limit == 0 {
 		err = r.db.
 			ModelContext(ctx, &positions).
 			Where("deviceid = ?", device).
+			Offset(int(offset)).
 			Select()
 	} else {
 		err = r.db.
 			ModelContext(ctx, &positions).
 			Where("deviceid = ?", device).
+			Offset(int(offset)).
 			Limit(int(limit)).
 			Select()
 	}
@@ -112,13 +138,47 @@ func (r *Repo) Positions(ctx context.Context, device uint, limit uint) ([]model.
 	return positions, err
 }
 
-func (r *Repo) PositionsBetween(ctx context.Context, d uint, f, t time.Time) ([]model.Position, error) {
-	positions := []model.Position{}
-	err := r.db.
-		ModelContext(ctx, &positions).
-		Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
-		Where("deviceid = ?", d).
-		Select()
+func (r *Repo) PositionsBetween(ctx context.Context, d, o, l uint, f, t time.Time) ([]Position, error) {
+	positions := []Position{}
+
+	var err error
+	if l == 0 {
+		err = r.db.
+			ModelContext(ctx, &positions).
+			Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
+			Where("deviceid = ?", d).
+			Offset(int(o)).
+			Select()
+	} else {
+		err = r.db.
+			ModelContext(ctx, &positions).
+			Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
+			Where("deviceid = ?", d).
+			Offset(int(o)).
+			Limit(int(l)).
+			Select()
+	}
 
 	return positions, err
+}
+
+func (r *Repo) ToTraccarPosition(p *Position) model.TraccarPosition {
+	return model.TraccarPosition{
+		ID:         p.ID,
+		CreatedAt:  model.ISOWithoutTZ(p.CreatedAt),
+		RecordedAt: model.ISOWithoutTZ(p.RecordedAt),
+		Valid:      p.Valid,
+		Device:     p.Device,
+		Latitude:   p.Latitude,
+		Longitude:  p.Longitude,
+		Altitude:   p.Altitude,
+		Speed:      p.Speed,
+		Course:     p.Course,
+		Payload:    p.Payload,
+		Accuracy:   p.Accuracy,
+		Address:    p.Address,
+		Protocol:   p.Protocol,
+		Network:    p.Network,
+		FixedAt:    model.ISOWithoutTZ(p.FixedAt),
+	}
 }
