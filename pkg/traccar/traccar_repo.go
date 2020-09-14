@@ -12,6 +12,26 @@ import (
 
 const tsFormat = "2006-01-02 15:04"
 
+type Position struct {
+	tableName  struct{} `pg:"tc_positions"`
+	ID         uint
+	CreatedAt  time.Time `pg:"servertime"`
+	RecordedAt time.Time `pg:"devicetime"`
+	Valid      bool      `pg:",use_zero"`
+	Device     uint      `pg:"deviceid"`
+	Latitude   float64   `pg:",use_zero"`
+	Longitude  float64   `pg:",use_zero"`
+	Altitude   float64   `pg:",use_zero"`
+	Speed      float64   `pg:",use_zero"`
+	Course     float64   `pg:",use_zero"`
+	Payload    string    `pg:"attributes"`
+	Accuracy   uint
+	Address    string
+	Protocol   string
+	Network    string
+	FixedAt    time.Time `pg:"fixtime"`
+}
+
 type Repo struct {
 	log     zerolog.Logger
 	db      *pg.DB
@@ -71,8 +91,8 @@ func (r *Repo) Device(ctx context.Context, id uint) (*model.Device, error) {
 	return device, nil
 }
 
-func (r *Repo) Position(ctx context.Context, id uint) (*model.TraccarPosition, error) {
-	position := &model.TraccarPosition{ID: id}
+func (r *Repo) Position(ctx context.Context, id uint) (*Position, error) {
+	position := &Position{ID: id}
 	if err := r.db.ModelContext(ctx, position).WherePK().Select(); err != nil {
 		return nil, err
 	}
@@ -80,8 +100,8 @@ func (r *Repo) Position(ctx context.Context, id uint) (*model.TraccarPosition, e
 	return position, nil
 }
 
-func (r *Repo) LatestPosition(ctx context.Context, device uint) (*model.TraccarPosition, error) {
-	position := &model.TraccarPosition{}
+func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, error) {
+	position := &Position{}
 	err := r.db.
 		ModelContext(ctx, position).
 		Where("deviceid = ?", device).
@@ -92,8 +112,8 @@ func (r *Repo) LatestPosition(ctx context.Context, device uint) (*model.TraccarP
 	return position, err
 }
 
-func (r *Repo) Positions(ctx context.Context, device uint, limit uint) ([]model.TraccarPosition, error) {
-	positions := []model.TraccarPosition{}
+func (r *Repo) Positions(ctx context.Context, device uint, limit uint) ([]Position, error) {
+	positions := []Position{}
 
 	var err error
 	if limit == 0 {
@@ -112,8 +132,8 @@ func (r *Repo) Positions(ctx context.Context, device uint, limit uint) ([]model.
 	return positions, err
 }
 
-func (r *Repo) PositionsBetween(ctx context.Context, d uint, f, t time.Time) ([]model.TraccarPosition, error) {
-	positions := []model.TraccarPosition{}
+func (r *Repo) PositionsBetween(ctx context.Context, d uint, f, t time.Time) ([]Position, error) {
+	positions := []Position{}
 	err := r.db.
 		ModelContext(ctx, &positions).
 		Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
@@ -121,4 +141,25 @@ func (r *Repo) PositionsBetween(ctx context.Context, d uint, f, t time.Time) ([]
 		Select()
 
 	return positions, err
+}
+
+func (r *Repo) ToTraccarPosition(p *Position) model.TraccarPosition {
+	return model.TraccarPosition{
+		ID:         p.ID,
+		CreatedAt:  model.ISOWithoutTZ(p.CreatedAt),
+		RecordedAt: model.ISOWithoutTZ(p.RecordedAt),
+		Valid:      p.Valid,
+		Device:     p.Device,
+		Latitude:   p.Latitude,
+		Longitude:  p.Longitude,
+		Altitude:   p.Altitude,
+		Speed:      p.Speed,
+		Course:     p.Course,
+		Payload:    p.Payload,
+		Accuracy:   p.Accuracy,
+		Address:    p.Address,
+		Protocol:   p.Protocol,
+		Network:    p.Network,
+		FixedAt:    model.ISOWithoutTZ(p.FixedAt),
+	}
 }
