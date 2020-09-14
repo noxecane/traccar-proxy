@@ -18,6 +18,7 @@ type latestPositionQuery struct {
 type positionQuery struct {
 	Device uint      `key:"device"`
 	Limit  uint      `key:"limit"`
+	Offset uint      `key:"offset"`
 	From   time.Time `key:"from"`
 	To     time.Time `key:"to"`
 }
@@ -52,7 +53,7 @@ func getPositions(repo *traccar.Repo) http.HandlerFunc {
 		var err error
 
 		if q.From.IsZero() {
-			tps, err = repo.Positions(r.Context(), q.Device, q.Limit)
+			tps, err = repo.Positions(r.Context(), q.Device, q.Offset, q.Limit)
 		} else {
 			tps, err = repo.PositionsBetween(r.Context(), q.Device, q.From.UTC(), q.To.UTC())
 		}

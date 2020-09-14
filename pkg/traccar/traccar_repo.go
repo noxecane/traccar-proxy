@@ -116,7 +116,7 @@ func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, erro
 	return position, err
 }
 
-func (r *Repo) Positions(ctx context.Context, device uint, limit uint) ([]Position, error) {
+func (r *Repo) Positions(ctx context.Context, device, offset, limit uint) ([]Position, error) {
 	positions := []Position{}
 
 	var err error
@@ -124,11 +124,13 @@ func (r *Repo) Positions(ctx context.Context, device uint, limit uint) ([]Positi
 		err = r.db.
 			ModelContext(ctx, &positions).
 			Where("deviceid = ?", device).
+			Offset(int(offset)).
 			Select()
 	} else {
 		err = r.db.
 			ModelContext(ctx, &positions).
 			Where("deviceid = ?", device).
+			Offset(int(offset)).
 			Limit(int(limit)).
 			Select()
 	}
