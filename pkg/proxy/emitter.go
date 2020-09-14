@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
-	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/rs/zerolog"
@@ -59,51 +58,14 @@ func (e *Emitter) Run(ctx context.Context, wg *sync.WaitGroup) {
 				}
 
 				p := event.Position
-				var attr model.TraccarAttributes
 
-				if err := json.Unmarshal([]byte(p.Payload), &attr); err != nil {
-					e.log.
-						Err(err).
-						Interface("position", p).
-						Msg("failed to to decode attributes")
+				res, err := traccar.TransformPosition(p)
+				if err != nil {
+					e.log.Err(err).Interface("position", p).Msg("")
 					continue
 				}
 
-				res := model.Position{
-					ID:         p.ID,
-					CreatedAt:  time.Time(p.CreatedAt),
-					RecordedAt: time.Time(p.RecordedAt),
-					Valid:      p.Valid,
-					Device:     p.Device,
-					Latitude:   p.Latitude,
-					Longitude:  p.Longitude,
-					Altitude:   p.Altitude,
-					Speed:      p.Speed,
-					Course:     p.Course,
-					Meta: model.Attributes{
-						FuelConsumption:     attr.FuelConsumption,
-						Raw:                 attr.Raw,
-						GSensor:             attr.GSensor,
-						Motion:              attr.Motion,
-						TotalDistance:       attr.TotalDistance,
-						RPM:                 attr.RPM,
-						Alarm:               attr.Alarm,
-						Ignition:            attr.Ignition,
-						DTC:                 attr.DTC,
-						EngineLoad:          attr.EngineLoad,
-						CoolantTemperature:  attr.CoolantTemperature,
-						TripOdometer:        attr.TripOdometer,
-						IntakeTemperature:   attr.IntakeTemperature,
-						Odometer:            attr.Odometer,
-						MapIntake:           attr.MapIntake,
-						Throttle:            attr.Throttle,
-						MilDistance:         attr.MilDistance,
-						Satellites:          attr.Satellites,
-						TripFuelConsumption: attr.TripFuelConsumption,
-					},
-				}
-
-				if err := e.conn.Publish("traccar.positions.stream", res); err != nil {
+				if err := e.conn.Publish("traccar.positions", res); err != nil {
 					e.log.Err(err).Interface("position", res).Msg("failed to publish")
 				}
 

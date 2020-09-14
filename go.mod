@@ -9,6 +9,7 @@ require (
 	github.com/go-pg/pg/v9 v9.2.0
 	github.com/nats-io/nats-server/v2 v2.1.8 // indirect
 	github.com/nats-io/nats.go v1.10.0
+	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.19.0
 	github.com/tsaron/anansi v0.9.0
 	golang.org/x/sys v0.0.0-20200909081042-eff7692f9009 // indirect
