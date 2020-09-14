@@ -42,11 +42,8 @@ func getPositions(repo *traccar.Repo) http.HandlerFunc {
 			})
 		}
 
-		if q.From.IsZero() != q.To.IsZero() {
-			panic(anansi.APIError{
-				Code:    http.StatusBadRequest,
-				Message: "Both from and to must be set if any is set at all",
-			})
+		if !q.From.IsZero() && q.To.IsZero() {
+			q.To = time.Now()
 		}
 
 		var tps []traccar.Position
@@ -55,7 +52,7 @@ func getPositions(repo *traccar.Repo) http.HandlerFunc {
 		if q.From.IsZero() {
 			tps, err = repo.Positions(r.Context(), q.Device, q.Offset, q.Limit)
 		} else {
-			tps, err = repo.PositionsBetween(r.Context(), q.Device, q.From.UTC(), q.To.UTC())
+			tps, err = repo.PositionsBetween(r.Context(), q.Device, q.Offset, q.Limit, q.From.UTC(), q.To.UTC())
 		}
 
 		if err != nil {

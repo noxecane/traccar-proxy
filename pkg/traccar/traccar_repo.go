@@ -138,13 +138,26 @@ func (r *Repo) Positions(ctx context.Context, device, offset, limit uint) ([]Pos
 	return positions, err
 }
 
-func (r *Repo) PositionsBetween(ctx context.Context, d uint, f, t time.Time) ([]Position, error) {
+func (r *Repo) PositionsBetween(ctx context.Context, d, o, l uint, f, t time.Time) ([]Position, error) {
 	positions := []Position{}
-	err := r.db.
-		ModelContext(ctx, &positions).
-		Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
-		Where("deviceid = ?", d).
-		Select()
+
+	var err error
+	if l == 0 {
+		err = r.db.
+			ModelContext(ctx, &positions).
+			Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
+			Where("deviceid = ?", d).
+			Offset(int(o)).
+			Select()
+	} else {
+		err = r.db.
+			ModelContext(ctx, &positions).
+			Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
+			Where("deviceid = ?", d).
+			Offset(int(o)).
+			Limit(int(l)).
+			Select()
+	}
 
 	return positions, err
 }
