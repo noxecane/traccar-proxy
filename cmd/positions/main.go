@@ -13,6 +13,7 @@ import (
 	"github.com/tsaron/anansi"
 	"github.com/tsaron/anansi/middleware"
 	"tsaron.com/positions/pkg/config"
+	"tsaron.com/positions/pkg/http/rest"
 	"tsaron.com/positions/pkg/proxy"
 	"tsaron.com/positions/pkg/traccar"
 )
@@ -45,11 +46,9 @@ func main() {
 	}
 	log.Info().Msg("successfully connected to nats server")
 
-	// var tmt time.Duration
-	// if tmt, err = time.ParseDuration(env.HeadlessTimeout); err != nil {
-	// 	panic(err)
-	// }
-	// sessions := anansi.NewSessionStore(env.Secret, env.Scheme, tmt, nil)
+	repo := traccar.NewRepo(db, "traccar.events", log)
+
+	sessions := anansi.NewSessionStore(env.Secret, env.Scheme, 0, nil)
 
 	// API router
 	router := chi.NewRouter()
@@ -67,6 +66,8 @@ func main() {
 		http.Error(w, "Whoops!! This route doesn't exist", http.StatusNotFound)
 	})
 
+	rest.Positions(router, sessions, repo)
+
 	// mount API on app router
 	appRouter := chi.NewRouter()
 	appRouter.Mount("/api/v1", router)
@@ -79,10 +80,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go anansi.CancelOnInterrupt(cancel, log)
-
-	repo := traccar.NewRepo(db, "traccar.events", log)
-
 	emitter, err := proxy.NewEmitter(nc, repo, log)
 	if err != nil {
 		panic(err)
@@ -92,6 +89,7 @@ func main() {
 
 	emitter.Run(ctx, done)
 
+	go anansi.CancelOnInterrupt(cancel, log)
 	anansi.RunServer(ctx, log, &http.Server{
 		Addr:    fmt.Sprintf(":%d", env.Port),
 		Handler: appRouter,
