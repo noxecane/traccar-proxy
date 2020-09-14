@@ -11,14 +11,14 @@ import (
 )
 
 type latestPositionQuery struct {
-	Device uint `json:"device"`
+	Device uint `key:"device"`
 }
 
 type positionQuery struct {
-	Device uint      `json:"device"`
-	Limit  uint      `json:"limit"`
-	From   time.Time `json:"from"`
-	To     time.Time `json:"to"`
+	Device uint      `key:"device"`
+	Limit  uint      `key:"limit"`
+	From   time.Time `key:"from"`
+	To     time.Time `key:"to"`
 }
 
 func Positions(r *chi.Mux, sessions *anansi.SessionStore, repo *traccar.Repo) {
