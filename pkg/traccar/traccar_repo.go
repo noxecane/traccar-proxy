@@ -71,8 +71,8 @@ func (r *Repo) Device(ctx context.Context, id uint) (*model.Device, error) {
 	return device, nil
 }
 
-func (r *Repo) Position(ctx context.Context, id uint) (*model.Position, error) {
-	position := &model.Position{ID: id}
+func (r *Repo) Position(ctx context.Context, id uint) (*model.TraccarPosition, error) {
+	position := &model.TraccarPosition{ID: id}
 	if err := r.db.ModelContext(ctx, position).WherePK().Select(); err != nil {
 		return nil, err
 	}
@@ -80,8 +80,8 @@ func (r *Repo) Position(ctx context.Context, id uint) (*model.Position, error) {
 	return position, nil
 }
 
-func (r *Repo) LatestPosition(ctx context.Context, device uint) (*model.Position, error) {
-	position := &model.Position{}
+func (r *Repo) LatestPosition(ctx context.Context, device uint) (*model.TraccarPosition, error) {
+	position := &model.TraccarPosition{}
 	err := r.db.
 		ModelContext(ctx, position).
 		Where("deviceid = ?", device).
@@ -92,8 +92,8 @@ func (r *Repo) LatestPosition(ctx context.Context, device uint) (*model.Position
 	return position, err
 }
 
-func (r *Repo) Positions(ctx context.Context, device uint, limit uint) ([]model.Position, error) {
-	positions := []model.Position{}
+func (r *Repo) Positions(ctx context.Context, device uint, limit uint) ([]model.TraccarPosition, error) {
+	positions := []model.TraccarPosition{}
 
 	var err error
 	if limit == 0 {
@@ -112,8 +112,8 @@ func (r *Repo) Positions(ctx context.Context, device uint, limit uint) ([]model.
 	return positions, err
 }
 
-func (r *Repo) PositionsBetween(ctx context.Context, d uint, f, t time.Time) ([]model.Position, error) {
-	positions := []model.Position{}
+func (r *Repo) PositionsBetween(ctx context.Context, d uint, f, t time.Time) ([]model.TraccarPosition, error) {
+	positions := []model.TraccarPosition{}
 	err := r.db.
 		ModelContext(ctx, &positions).
 		Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).

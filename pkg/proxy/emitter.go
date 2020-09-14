@@ -19,8 +19,8 @@ type Emitter struct {
 }
 
 type PositionEvent struct {
-	Action   string         `json:"action"`
-	Position model.Position `json:"data"`
+	Action   string                `json:"action"`
+	Position model.TraccarPosition `json:"data"`
 }
 
 // TODO: https://github.com/nats-io/nats.go/blob/master/examples/nats-qsub/main.go (options)
@@ -60,7 +60,7 @@ func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
 				}
 
 				p := event.Position
-				var attr model.Attributes
+				var attr model.TraccarAttributes
 
 				if err := json.Unmarshal([]byte(p.Payload), &attr); err != nil {
 					e.log.
@@ -70,7 +70,7 @@ func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
 					continue
 				}
 
-				res := Position{
+				res := model.Position{
 					ID:         p.ID,
 					CreatedAt:  time.Time(p.CreatedAt),
 					RecordedAt: time.Time(p.RecordedAt),
@@ -81,7 +81,7 @@ func (e *Emitter) Run(ctx context.Context) *sync.WaitGroup {
 					Altitude:   p.Altitude,
 					Speed:      p.Speed,
 					Course:     p.Course,
-					Meta: Attributes{
+					Meta: model.Attributes{
 						FuelConsumption:     attr.FuelConsumption,
 						Raw:                 attr.Raw,
 						GSensor:             attr.GSensor,
