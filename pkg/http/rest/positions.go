@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/pkg/errors"
 	"github.com/tsaron/anansi"
 	"tsaron.com/positions/pkg/model"
 	"tsaron.com/positions/pkg/traccar"
@@ -57,7 +58,7 @@ func getPositions(repo *traccar.Repo) http.HandlerFunc {
 		}
 
 		if err != nil {
-			panic(err)
+			panic(errors.Wrap(err, "could not get positions"))
 		}
 
 		var ps []model.Position
@@ -93,7 +94,7 @@ func getLatestPosition(repo *traccar.Repo) http.HandlerFunc {
 		p, err := repo.LatestPosition(r.Context(), q.Device)
 		// let anansi take care of the error
 		if err != nil {
-			panic(err)
+			panic(errors.Wrap(err, "could not get latest position"))
 		}
 
 		pos, err := traccar.TransformPosition(*p)
