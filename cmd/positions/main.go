@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi"
 	chiWare "github.com/go-chi/chi/middleware"
 	"github.com/go-pg/pg/v9"
-	"github.com/nats-io/nats.go"
 	"github.com/tsaron/anansi"
 	"github.com/tsaron/anansi/middleware"
 	"tsaron.com/positions/pkg/config"
@@ -39,7 +38,7 @@ func main() {
 	}()
 	log.Info().Msg("successfully connected to postgres")
 
-	nc, err := nats.Connect(env.NatsUrl)
+	nc, err := config.SetupNats(env)
 	if err != nil {
 		panic(err)
 	}
