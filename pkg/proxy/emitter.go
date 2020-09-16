@@ -44,6 +44,7 @@ func (e *Emitter) Run(ctx context.Context, wg *sync.WaitGroup) {
 	go e.repo.Listen(ctx, "tc_positions", out)
 
 	go func() {
+	selectloop:
 		for {
 			select {
 			case ev := <-out:
@@ -77,9 +78,11 @@ func (e *Emitter) Run(ctx context.Context, wg *sync.WaitGroup) {
 					e.log.Err(err).Msg("failed to drain nats connection")
 				}
 
-				// tell the caller we're done
-				wg.Done()
+				break selectloop
 			}
 		}
+
+		// tell the caller we're done
+		wg.Done()
 	}()
 }
