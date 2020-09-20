@@ -105,7 +105,7 @@ func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, erro
 	err := r.db.
 		ModelContext(ctx, position).
 		Where("deviceid = ?", device).
-		Order("servertime DESC").
+		Order("devicetime DESC").
 		Limit(1).
 		Select()
 
@@ -125,6 +125,7 @@ func (r *Repo) Positions(ctx context.Context, device, offset, limit uint) ([]Pos
 			ModelContext(ctx, &positions).
 			Where("deviceid = ?", device).
 			Offset(int(offset)).
+			Order("devicetime DESC").
 			Select()
 	} else {
 		err = r.db.
@@ -132,6 +133,7 @@ func (r *Repo) Positions(ctx context.Context, device, offset, limit uint) ([]Pos
 			Where("deviceid = ?", device).
 			Offset(int(offset)).
 			Limit(int(limit)).
+			Order("devicetime DESC").
 			Select()
 	}
 
@@ -145,17 +147,19 @@ func (r *Repo) PositionsBetween(ctx context.Context, d, o, l uint, f, t time.Tim
 	if l == 0 {
 		err = r.db.
 			ModelContext(ctx, &positions).
-			Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
+			Where("devicetime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
 			Where("deviceid = ?", d).
 			Offset(int(o)).
+			Order("devicetime DESC").
 			Select()
 	} else {
 		err = r.db.
 			ModelContext(ctx, &positions).
-			Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
+			Where("devicetime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
 			Where("deviceid = ?", d).
 			Offset(int(o)).
 			Limit(int(l)).
+			Order("devicetime DESC").
 			Select()
 	}
 
