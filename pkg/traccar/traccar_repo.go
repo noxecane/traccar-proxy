@@ -119,22 +119,17 @@ func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, erro
 func (r *Repo) Positions(ctx context.Context, device, offset, limit uint) ([]Position, error) {
 	positions := []Position{}
 
+	query := r.db.
+		ModelContext(ctx, &positions).
+		Where("deviceid = ?", device).
+		Offset(int(offset)).
+		Order("devicetime DESC")
+
 	var err error
 	if limit == 0 {
-		err = r.db.
-			ModelContext(ctx, &positions).
-			Where("deviceid = ?", device).
-			Offset(int(offset)).
-			Order("devicetime DESC").
-			Select()
+		err = query.Select()
 	} else {
-		err = r.db.
-			ModelContext(ctx, &positions).
-			Where("deviceid = ?", device).
-			Offset(int(offset)).
-			Limit(int(limit)).
-			Order("devicetime DESC").
-			Select()
+		err = query.Limit(int(limit)).Select()
 	}
 
 	return positions, err
@@ -143,24 +138,18 @@ func (r *Repo) Positions(ctx context.Context, device, offset, limit uint) ([]Pos
 func (r *Repo) PositionsBetween(ctx context.Context, d, o, l uint, f, t time.Time) ([]Position, error) {
 	positions := []Position{}
 
+	query := r.db.
+		ModelContext(ctx, &positions).
+		Where("devicetime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
+		Where("deviceid = ?", d).
+		Offset(int(o)).
+		Order("devicetime DESC")
+
 	var err error
 	if l == 0 {
-		err = r.db.
-			ModelContext(ctx, &positions).
-			Where("devicetime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
-			Where("deviceid = ?", d).
-			Offset(int(o)).
-			Order("devicetime DESC").
-			Select()
+		err = query.Select()
 	} else {
-		err = r.db.
-			ModelContext(ctx, &positions).
-			Where("devicetime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
-			Where("deviceid = ?", d).
-			Offset(int(o)).
-			Limit(int(l)).
-			Order("devicetime DESC").
-			Select()
+		err = query.Limit(int(l)).Select()
 	}
 
 	return positions, err
