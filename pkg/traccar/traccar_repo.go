@@ -62,24 +62,19 @@ func (r *Repo) Listen(ctx context.Context, table string, out chan<- []byte) {
 	}
 }
 
-func (r *Repo) Device(ctx context.Context, externalID string) (*model.Device, error) {
-	device := new(model.Device)
+func (r *Repo) FindDevice(ctx context.Context, externalID string) (*Device, error) {
+	device := new(Device)
 
 	err := r.db.
 		ModelContext(ctx, device).
 		Where("uniqueid = ?", externalID).
 		Select()
 
-	return device, err
-}
-
-func (r *Repo) Position(ctx context.Context, id uint) (*Position, error) {
-	position := &Position{ID: id}
-	if err := r.db.ModelContext(ctx, position).WherePK().Select(); err != nil {
-		return nil, err
+	if err == pg.ErrNoRows {
+		return nil, nil
 	}
 
-	return position, nil
+	return device, err
 }
 
 func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, error) {
@@ -98,7 +93,7 @@ func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, erro
 	return position, err
 }
 
-func (r *Repo) Positions(ctx context.Context, device, offset, limit uint) ([]Position, error) {
+func (r *Repo) FindPositions(ctx context.Context, device, offset, limit uint) ([]Position, error) {
 	positions := []Position{}
 
 	query := r.db.
@@ -117,7 +112,7 @@ func (r *Repo) Positions(ctx context.Context, device, offset, limit uint) ([]Pos
 	return positions, err
 }
 
-func (r *Repo) PositionsBetween(ctx context.Context, d, o, l uint, f, t time.Time) ([]Position, error) {
+func (r *Repo) FindPositionsBetween(ctx context.Context, d, o, l uint, f, t time.Time) ([]Position, error) {
 	positions := []Position{}
 
 	query := r.db.
