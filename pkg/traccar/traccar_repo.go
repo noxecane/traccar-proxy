@@ -82,13 +82,15 @@ func (r *Repo) Listen(ctx context.Context, table string, out chan<- []byte) {
 	}
 }
 
-func (r *Repo) Device(ctx context.Context, id uint) (*model.Device, error) {
-	device := &model.Device{ID: id}
-	if err := r.db.ModelContext(ctx, device).WherePK().Select(); err != nil {
-		return nil, err
-	}
+func (r *Repo) Device(ctx context.Context, externalID string) (*model.Device, error) {
+	device := new(model.Device)
 
-	return device, nil
+	err := r.db.
+		ModelContext(ctx, device).
+		Where("uniqueid = ?", externalID).
+		Select()
+
+	return device, err
 }
 
 func (r *Repo) Position(ctx context.Context, id uint) (*Position, error) {
