@@ -3,6 +3,7 @@ package proxy
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/nats-io/nats.go"
@@ -66,7 +67,8 @@ func (e *Emitter) Run(ctx context.Context, wg *sync.WaitGroup) {
 					continue
 				}
 
-				if err := e.conn.Publish("traccar.positions", res); err != nil {
+				topic := fmt.Sprintf("traccar.positions.device_%d", res.Device)
+				if err := e.conn.Publish(topic, res); err != nil {
 					e.log.Err(err).Interface("position", res).Msg("failed to publish")
 				}
 
