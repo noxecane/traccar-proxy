@@ -1,7 +1,9 @@
+SHELL=/bin/bash
 NAME := ${REGISTRY}/${CIRCLE_PROJECT_REPONAME}
 VERSION := "v$(shell git describe --tags --always --dirty)"
 BUILD := `date +%FT%T%z`
 LDFLAGS := -ldflags "-X main.Version=${VERSION} -X main.Build=${BUILD}"
+COLORING_ARGS := ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/''
 
 ifeq (${CIRCLE_BRANCH}, master)
 	REPLICA_COUNT := 2
@@ -49,8 +51,7 @@ test: export CGO_ENABLED = 0
 test:
 	@go mod tidy
 	@go mod vendor
-	@go build ./pkg/... ./cmd/...
-	@go test -v ./pkg/... | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/''
+	@set -o pipefail && go test -v ./pkg/... | sed ${COLORING_ARGS}
 
 # Deploy to k8s cluster via helm
 .PHONY: deploy
