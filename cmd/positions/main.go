@@ -67,6 +67,7 @@ func main() {
 	})
 
 	rest.Positions(router, sessions, repo)
+	rest.Devices(router, sessions, repo)
 
 	// mount API on app router
 	appRouter := chi.NewRouter()
