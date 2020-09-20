@@ -12,26 +12,6 @@ import (
 
 const tsFormat = "2006-01-02 15:04"
 
-type Position struct {
-	tableName  struct{} `pg:"tc_positions"`
-	ID         uint
-	CreatedAt  time.Time `pg:"servertime"`
-	RecordedAt time.Time `pg:"devicetime"`
-	Valid      bool      `pg:",use_zero"`
-	Device     uint      `pg:"deviceid"`
-	Latitude   float64   `pg:",use_zero"`
-	Longitude  float64   `pg:",use_zero"`
-	Altitude   float64   `pg:",use_zero"`
-	Speed      float64   `pg:",use_zero"`
-	Course     float64   `pg:",use_zero"`
-	Payload    string    `pg:"attributes"`
-	Accuracy   uint
-	Address    string
-	Protocol   string
-	Network    string
-	FixedAt    time.Time `pg:"fixtime"`
-}
-
 type Repo struct {
 	log     zerolog.Logger
 	db      *pg.DB
@@ -82,22 +62,19 @@ func (r *Repo) Listen(ctx context.Context, table string, out chan<- []byte) {
 	}
 }
 
-func (r *Repo) Device(ctx context.Context, id uint) (*model.Device, error) {
-	device := &model.Device{ID: id}
-	if err := r.db.ModelContext(ctx, device).WherePK().Select(); err != nil {
-		return nil, err
+func (r *Repo) FindDevice(ctx context.Context, externalID string) (*Device, error) {
+	device := new(Device)
+
+	err := r.db.
+		ModelContext(ctx, device).
+		Where("uniqueid = ?", externalID).
+		Select()
+
+	if err == pg.ErrNoRows {
+		return nil, nil
 	}
 
-	return device, nil
-}
-
-func (r *Repo) Position(ctx context.Context, id uint) (*Position, error) {
-	position := &Position{ID: id}
-	if err := r.db.ModelContext(ctx, position).WherePK().Select(); err != nil {
-		return nil, err
-	}
-
-	return position, nil
+	return device, err
 }
 
 func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, error) {
@@ -105,7 +82,7 @@ func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, erro
 	err := r.db.
 		ModelContext(ctx, position).
 		Where("deviceid = ?", device).
-		Order("servertime DESC").
+		Order("devicetime DESC").
 		Limit(1).
 		Select()
 
@@ -116,47 +93,40 @@ func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, erro
 	return position, err
 }
 
-func (r *Repo) Positions(ctx context.Context, device, offset, limit uint) ([]Position, error) {
+func (r *Repo) FindPositions(ctx context.Context, device, offset, limit uint) ([]Position, error) {
 	positions := []Position{}
+
+	query := r.db.
+		ModelContext(ctx, &positions).
+		Where("deviceid = ?", device).
+		Offset(int(offset)).
+		Order("devicetime DESC")
 
 	var err error
 	if limit == 0 {
-		err = r.db.
-			ModelContext(ctx, &positions).
-			Where("deviceid = ?", device).
-			Offset(int(offset)).
-			Select()
+		err = query.Select()
 	} else {
-		err = r.db.
-			ModelContext(ctx, &positions).
-			Where("deviceid = ?", device).
-			Offset(int(offset)).
-			Limit(int(limit)).
-			Select()
+		err = query.Limit(int(limit)).Select()
 	}
 
 	return positions, err
 }
 
-func (r *Repo) PositionsBetween(ctx context.Context, d, o, l uint, f, t time.Time) ([]Position, error) {
+func (r *Repo) FindPositionsBetween(ctx context.Context, d, o, l uint, f, t time.Time) ([]Position, error) {
 	positions := []Position{}
+
+	query := r.db.
+		ModelContext(ctx, &positions).
+		Where("devicetime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
+		Where("deviceid = ?", d).
+		Offset(int(o)).
+		Order("devicetime DESC")
 
 	var err error
 	if l == 0 {
-		err = r.db.
-			ModelContext(ctx, &positions).
-			Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
-			Where("deviceid = ?", d).
-			Offset(int(o)).
-			Select()
+		err = query.Select()
 	} else {
-		err = r.db.
-			ModelContext(ctx, &positions).
-			Where("servertime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
-			Where("deviceid = ?", d).
-			Offset(int(o)).
-			Limit(int(l)).
-			Select()
+		err = query.Limit(int(l)).Select()
 	}
 
 	return positions, err

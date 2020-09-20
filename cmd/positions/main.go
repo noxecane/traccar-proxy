@@ -13,8 +13,8 @@ import (
 	"github.com/tsaron/anansi"
 	"github.com/tsaron/anansi/middleware"
 	"tsaron.com/positions/pkg/config"
-	"tsaron.com/positions/pkg/http/rest"
 	"tsaron.com/positions/pkg/proxy"
+	"tsaron.com/positions/pkg/rest"
 	"tsaron.com/positions/pkg/traccar"
 )
 
@@ -67,6 +67,7 @@ func main() {
 	})
 
 	rest.Positions(router, sessions, repo)
+	rest.Devices(router, sessions, repo)
 
 	// mount API on app router
 	appRouter := chi.NewRouter()

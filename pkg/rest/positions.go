@@ -50,9 +50,9 @@ func getPositions(repo *traccar.Repo) http.HandlerFunc {
 		var err error
 
 		if q.From.IsZero() {
-			tps, err = repo.Positions(r.Context(), q.Device, q.Offset, q.Limit)
+			tps, err = repo.FindPositions(r.Context(), q.Device, q.Offset, q.Limit)
 		} else {
-			tps, err = repo.PositionsBetween(r.Context(), q.Device, q.Offset, q.Limit, q.From.UTC(), q.To.UTC())
+			tps, err = repo.FindPositionsBetween(r.Context(), q.Device, q.Offset, q.Limit, q.From.UTC(), q.To.UTC())
 		}
 
 		if err != nil {
