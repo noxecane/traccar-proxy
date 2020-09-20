@@ -12,26 +12,6 @@ import (
 
 const tsFormat = "2006-01-02 15:04"
 
-type Position struct {
-	tableName  struct{} `pg:"tc_positions"`
-	ID         uint
-	CreatedAt  time.Time `pg:"servertime"`
-	RecordedAt time.Time `pg:"devicetime"`
-	Valid      bool      `pg:",use_zero"`
-	Device     uint      `pg:"deviceid"`
-	Latitude   float64   `pg:",use_zero"`
-	Longitude  float64   `pg:",use_zero"`
-	Altitude   float64   `pg:",use_zero"`
-	Speed      float64   `pg:",use_zero"`
-	Course     float64   `pg:",use_zero"`
-	Payload    string    `pg:"attributes"`
-	Accuracy   uint
-	Address    string
-	Protocol   string
-	Network    string
-	FixedAt    time.Time `pg:"fixtime"`
-}
-
 type Repo struct {
 	log     zerolog.Logger
 	db      *pg.DB
