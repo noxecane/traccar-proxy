@@ -13,8 +13,8 @@ import (
 	"github.com/tsaron/anansi"
 	"github.com/tsaron/anansi/middleware"
 	"tsaron.com/positions/pkg/config"
-	"tsaron.com/positions/pkg/http/rest"
 	"tsaron.com/positions/pkg/proxy"
+	"tsaron.com/positions/pkg/rest"
 	"tsaron.com/positions/pkg/traccar"
 )
 
