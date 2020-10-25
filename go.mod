@@ -1,4 +1,4 @@
-module tsaron.com/positions
+module tsaron.com/traccar-proxy
 
 go 1.14
 

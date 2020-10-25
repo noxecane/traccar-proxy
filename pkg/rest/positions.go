@@ -7,8 +7,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
 	"github.com/tsaron/anansi"
-	"tsaron.com/positions/pkg/model"
-	"tsaron.com/positions/pkg/traccar"
+	"tsaron.com/traccar-proxy/pkg/model"
+	"tsaron.com/traccar-proxy/pkg/traccar"
 )
 
 type latestPositionQuery struct {

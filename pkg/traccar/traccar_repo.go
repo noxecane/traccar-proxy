@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-pg/pg/v9"
 	"github.com/rs/zerolog"
-	"tsaron.com/positions/pkg/model"
+	"tsaron.com/traccar-proxy/pkg/model"
 )
 
 const tsFormat = "2006-01-02 15:04"

@@ -7,12 +7,12 @@ jobs:
       - image: redis
       - image: circleci/postgres:12
         environment:
-          POSTGRES_USER: positions
+          POSTGRES_USER: traccar-proxy
           POSTGRES_PASSWORD: testpassword
           POSTGRES_DB: castdb
     environment:
       APP_ENV: test
-      NAME: positions
+      NAME: traccar-proxy
       PORT: "3008"
       SCHEME: Cast
       SECRET: our-own-special-secret-for-sec
@@ -24,8 +24,8 @@ jobs:
       POSTGRES_DATABASE: castdb
       PGDATABASE: castdb
       POSTGRES_PORT: "5432"
-      POSTGRES_USER: positions
-      PGUSER: positions
+      POSTGRES_USER: traccar-proxy
+      PGUSER: traccar-proxy
       POSTGRES_PASSWORD: testpassword
       PGPASSWORD: testpassword
       POSTGRES_SECURE_MODE: "false"

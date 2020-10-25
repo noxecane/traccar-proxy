@@ -12,10 +12,10 @@ import (
 	"github.com/go-pg/pg/v9"
 	"github.com/tsaron/anansi"
 	"github.com/tsaron/anansi/middleware"
-	"tsaron.com/positions/pkg/config"
-	"tsaron.com/positions/pkg/proxy"
-	"tsaron.com/positions/pkg/rest"
-	"tsaron.com/positions/pkg/traccar"
+	"tsaron.com/traccar-proxy/pkg/config"
+	"tsaron.com/traccar-proxy/pkg/proxy"
+	"tsaron.com/traccar-proxy/pkg/rest"
+	"tsaron.com/traccar-proxy/pkg/traccar"
 )
 
 func main() {

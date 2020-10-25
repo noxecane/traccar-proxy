@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "positions.fullname" . }}
+  name: {{ include "traccar-proxy.fullname" . }}
   labels:
-    app.kubernetes.io/name: {{ include "positions.name" . }}
-    helm.sh/chart: {{ include "positions.chart" . }}
+    app.kubernetes.io/name: {{ include "traccar-proxy.name" . }}
+    helm.sh/chart: {{ include "traccar-proxy.chart" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "positions.name" . }}
+      app.kubernetes.io/name: {{ include "traccar-proxy.name" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
@@ -21,7 +21,7 @@ spec:
         prometheus.io/port: "80"
         updatedAt: {{ now | quote }}
       labels:
-        app.kubernetes.io/name: {{ include "positions.name" . }}
+        app.kubernetes.io/name: {{ include "traccar-proxy.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       containers:
@@ -52,7 +52,7 @@ spec:
             - name: {{ $env | upper }}
               valueFrom:
                 secretKeyRef:
-                  name: positions
+                  name: traccar-proxy
                   key: {{ $env }}
             {{- end }}
           livenessProbe:

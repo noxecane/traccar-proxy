@@ -8,8 +8,8 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"github.com/rs/zerolog"
-	"tsaron.com/positions/pkg/model"
-	"tsaron.com/positions/pkg/traccar"
+	"tsaron.com/traccar-proxy/pkg/model"
+	"tsaron.com/traccar-proxy/pkg/traccar"
 )
 
 type Emitter struct {
