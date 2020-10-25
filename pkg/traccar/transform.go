@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"tsaron.com/positions/pkg/model"
+	"tsaron.com/traccar-proxy/pkg/model"
 )
 
 func TransformPosition(p model.TraccarPosition) (model.Position, error) {

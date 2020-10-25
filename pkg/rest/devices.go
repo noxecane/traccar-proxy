@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/tsaron/anansi"
-	"tsaron.com/positions/pkg/model"
-	"tsaron.com/positions/pkg/traccar"
+	"tsaron.com/traccar-proxy/pkg/model"
+	"tsaron.com/traccar-proxy/pkg/traccar"
 )
 
 func Devices(r *chi.Mux, sessions *anansi.SessionStore, repo *traccar.Repo) {
