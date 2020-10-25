@@ -8,7 +8,7 @@ import (
 
 type ISOWithoutTZ time.Time
 
-// imeplement Marshaler und Unmarshalere interface
+// imeplement Marshaler und Unmarshaler interface
 func (i *ISOWithoutTZ) UnmarshalJSON(b []byte) error {
 	// remove quotes
 	tStr := strings.Trim(string(b), "\"")

@@ -17,10 +17,11 @@ type latestPositionQuery struct {
 
 type positionQuery struct {
 	Device uint      `key:"device"`
-	Limit  uint      `key:"limit"`
-	Offset uint      `key:"offset"`
+	Limit  int       `key:"limit"`
+	Offset int       `key:"offset"`
 	From   time.Time `key:"from"`
 	To     time.Time `key:"to"`
+	Order  string    `key:"order" default:"latest"`
 }
 
 func Positions(r *chi.Mux, sessions *anansi.SessionStore, repo *traccar.Repo) {
@@ -46,22 +47,20 @@ func getPositions(repo *traccar.Repo) http.HandlerFunc {
 			q.To = time.Now()
 		}
 
-		var tps []traccar.Position
-		var err error
-
-		if q.From.IsZero() {
-			tps, err = repo.FindPositions(r.Context(), q.Device, q.Offset, q.Limit)
-		} else {
-			tps, err = repo.FindPositionsBetween(r.Context(), q.Device, q.Offset, q.Limit, q.From.UTC(), q.To.UTC())
-		}
-
+		tps, err := repo.FindPositions(r.Context(), q.Device, traccar.QueryOpts{
+			From:   q.From,
+			To:     q.To,
+			Offset: q.Offset,
+			Limit:  q.Limit,
+			Order:  q.Order,
+		})
 		if err != nil {
 			panic(errors.Wrap(err, "could not get positions"))
 		}
 
 		var ps []model.Position
 		for _, tp := range tps {
-			p, err := traccar.TransformPosition(repo.ToTraccarPosition(&tp))
+			p, err := traccar.TransformPosition(repo.RemoveTZ(&tp))
 			if err != nil {
 				panic(anansi.APIError{
 					Code:    http.StatusUnprocessableEntity,
@@ -100,7 +99,7 @@ func getLatestPosition(repo *traccar.Repo) http.HandlerFunc {
 			return
 		}
 
-		pos, err := traccar.TransformPosition(repo.ToTraccarPosition(p))
+		pos, err := traccar.TransformPosition(repo.RemoveTZ(p))
 		if err != nil {
 			panic(anansi.APIError{
 				Code:    http.StatusUnprocessableEntity,
