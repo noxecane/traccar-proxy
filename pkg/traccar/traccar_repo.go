@@ -3,6 +3,8 @@ package traccar
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/go-pg/pg/v9"
@@ -10,7 +12,9 @@ import (
 	"tsaron.com/traccar-proxy/pkg/model"
 )
 
-const tsFormat = "2006-01-02 15:04"
+const pgTimef = "2006-01-02 15:04"
+
+var ErrInvalidQuery = errors.New("your query is invalid")
 
 type Repo struct {
 	log     zerolog.Logger
@@ -93,46 +97,60 @@ func (r *Repo) LatestPosition(ctx context.Context, device uint) (*Position, erro
 	return position, err
 }
 
-func (r *Repo) FindPositions(ctx context.Context, device, offset, limit uint) ([]Position, error) {
+type QueryOpts struct {
+	// The oldest position by devicetime. If this is not set, time based query is entirely ignroed
+	From time.Time
+	// The latest position by devicetime.
+	To time.Time
+	// The maximum number of positions to return
+	Limit int
+	// How many positions to skip before limit starts getting counted
+	Offset int
+	// Order of the results. Could be "oldest" meaning oldest first or "latest" meaning latest first
+	// arranged by the devicetime of the positions.
+	Order string
+}
+
+func (r *Repo) FindPositions(ctx context.Context, device uint, opts QueryOpts) ([]Position, error) {
 	positions := []Position{}
+
+	order := "devicetime"
+	switch opts.Order {
+	case "oldest":
+		order += " ASC"
+	case "latest":
+		order += " DESC"
+	default:
+		return nil, ErrInvalidQuery
+	}
 
 	query := r.db.
 		ModelContext(ctx, &positions).
 		Where("deviceid = ?", device).
-		Offset(int(offset)).
-		Order("devicetime DESC")
+		Offset(opts.Offset).
+		Order(order)
+
+	switch {
+	case !opts.From.IsZero() && !opts.To.IsZero():
+		tRange := fmt.Sprintf("[%s, %s]", opts.From.Format(pgTimef), opts.To.Format(pgTimef))
+		query = query.Where("?::tsrange @> devicetime", tRange)
+	case opts.From.IsZero() && opts.To.IsZero():
+		// no-op
+	default:
+		return nil, ErrInvalidQuery
+	}
 
 	var err error
-	if limit == 0 {
+	if opts.Limit == 0 {
 		err = query.Select()
 	} else {
-		err = query.Limit(int(limit)).Select()
+		err = query.Limit(opts.Limit).Select()
 	}
 
 	return positions, err
 }
 
-func (r *Repo) FindPositionsBetween(ctx context.Context, d, o, l uint, f, t time.Time) ([]Position, error) {
-	positions := []Position{}
-
-	query := r.db.
-		ModelContext(ctx, &positions).
-		Where("devicetime [?,?]::tsrange", f.UTC().Format(tsFormat), t.UTC().Format(tsFormat)).
-		Where("deviceid = ?", d).
-		Offset(int(o)).
-		Order("devicetime DESC")
-
-	var err error
-	if l == 0 {
-		err = query.Select()
-	} else {
-		err = query.Limit(int(l)).Select()
-	}
-
-	return positions, err
-}
-
-func (r *Repo) ToTraccarPosition(p *Position) model.TraccarPosition {
+func (r *Repo) RemoveTZ(p *Position) model.TraccarPosition {
 	return model.TraccarPosition{
 		ID:         p.ID,
 		CreatedAt:  model.ISOWithoutTZ(p.CreatedAt),
