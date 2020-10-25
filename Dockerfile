@@ -15,7 +15,7 @@ RUN go mod verify
 COPY . .
 
 # Build the binary
-RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /app/server ./cmd/positions/main.go
+RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /app/server ./cmd/proxy/main.go
 
 FROM gcr.io/distroless/base
 
