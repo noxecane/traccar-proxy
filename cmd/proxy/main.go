@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	chiWare "github.com/go-chi/chi/middleware"
 	"github.com/go-pg/pg/v9"
 	"github.com/tsaron/anansi"
 	"github.com/tsaron/anansi/middleware"
@@ -54,14 +53,14 @@ func main() {
 	router := chi.NewRouter()
 
 	// setup app middlware
-	middleware.CORS(router, env.AppEnv, "https://*.tsaron.com", "https://*castui.netlify.app", "http://localhost:8080")
-	middleware.DefaultMiddleware(router)
-	router.Use(middleware.AttachLogger(log))
-	router.Use(middleware.TrackRequest())
-	router.Use(middleware.TrackResponse())
-	router.Use(middleware.Recoverer(env.AppEnv))
-	router.Use(chiWare.Timeout(time.Minute))
-
+	middleware.DefaultMiddleware(router, log, middleware.MiddlwareConfig{
+		Environment: env.AppEnv,
+		CORSOrigins: []string{
+			"https://*.tsaron.com",
+			"https://*castui.netlify.app",
+			"http://localhost:8080",
+		},
+	})
 	router.NotFound(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "Whoops!! This route doesn't exist", http.StatusNotFound)
 	})
@@ -90,11 +89,23 @@ func main() {
 
 	emitter.Run(ctx, done)
 
-	go anansi.CancelOnInterrupt(cancel, log)
-	anansi.RunServer(ctx, log, &http.Server{
+	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", env.Port),
 		Handler: appRouter,
-	})
+	}
+
+	go func() {
+		l := log.With().Logger()
+		<-ctx.Done()
+
+		// shutdown server in 5s
+		shutCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+
+		if err := server.Shutdown(shutCtx); err != nil {
+			l.Err(err).Msg("could not shut down server cleanly...")
+		}
+	}()
 
 	// make sure the worker dies
 	done.Wait()
